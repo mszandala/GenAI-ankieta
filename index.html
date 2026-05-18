@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ankieta: AI vs AI – Muzyka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --card:      #1e1e24;
+      --border:    #2a2a33;
+      --accent:    #c8f060;
+      --accent2:   #60c8f0;
+      --text:      #ececec;
+      --muted:     #7a7a8c;
+      --radius:    14px;
+      --font-head: 'DM Serif Display', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── NOISE OVERLAY ──────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 6vw, 3.4rem);
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    h1 em { font-style: italic; color: var(--accent); }
+    .subtitle {
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto;
+      font-size: 15px;
+    }
+    .divider {
+      width: 48px; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      margin: 24px auto 0;
+      border-radius: 2px;
+    }
+
+    /* ── SECTION CARD ───────────────────────────────────────── */
+    .prompt-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px;
+      margin-bottom: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .prompt-section::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .section-number {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      color: var(--text);
+    }
+    .section-prompt-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── TRACKS GRID ────────────────────────────────────────── */
+    .tracks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 600px) { .tracks-grid { grid-template-columns: 1fr; } }
+
+    /* ── TRACK CARD ─────────────────────────────────────────── */
+    .track-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px 20px;
+      position: relative;
+    }
+    .track-label {
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .track-label::before {
+      content: '';
+      display: block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .track-card:nth-child(2) .track-label { color: var(--accent2); }
+    .track-card:nth-child(2) .track-label::before { background: var(--accent2); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.8); }
+    }
+
+    /* ── AUDIO PLAYER ───────────────────────────────────────── */
+    audio {
+      width: 100%;
+      height: 36px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      filter: invert(1) hue-rotate(160deg) brightness(.9);
+      outline: none;
+    }
+
+    /* ── QUESTIONS ──────────────────────────────────────────── */
+    .questions { display: flex; flex-direction: column; gap: 16px; }
+    .question-item {}
+    .question-text {
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-style: normal;
+      font-weight: 600;
+    }
+    .question-description {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+    /* ── PYTANIA – PLACEHOLDER – EDYTUJ TU ─────────────────── */
+    /* Wpisz treść pytań w atrybutach data-question każdego .question-item */
+
+    /* ── RATING BUTTONS ─────────────────────────────────────── */
+    .rating-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .rating-group input[type="radio"] { position: absolute; opacity: 0; z-index: -1; }
+    .rating-group label {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all .18s ease;
+      user-select: none;
+    }
+    .rating-group label:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,240,96,.06); }
+    .rating-group input[type="radio"]:checked + label {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    .track-card:nth-child(2) .rating-group label:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(96,200,240,.06); }
+    .track-card:nth-child(2) .rating-group input[type="radio"]:checked + label {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: var(--bg);
+    }
+
+    .replay-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all .15s ease;
+    }
+    .replay-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,240,96,.04); }
+    /* overlay replay button removed — no extra button styling */
+
+    /* make native audio controls larger for easier tapping on touch devices */
+    audio { max-width: 100%; height: 56px; }
+
+    /* ── WINNER QUESTION ────────────────────────────────────── */
+    .winner-block {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 8px;
+    }
+    .winner-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .winner-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .winner-options input[type="radio"] { position: absolute; opacity: 0; z-index: -1; }
+    .winner-options label {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all .18s ease;
+      color: var(--muted);
+    }
+    .winner-options label:hover { border-color: var(--accent); color: var(--accent); }
+    .winner-options input[type="radio"]:checked + label {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(200,240,96,.08);
+      font-weight: 600;
+    }
+
+    /* ── SUBMIT SECTION ─────────────────────────────────────── */
+    .submit-block {
+      text-align: center;
+      padding: 40px 0 0;
+    }
+    .submit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 100px;
+      padding: 16px 48px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: transform .18s, box-shadow .18s;
+      box-shadow: 0 0 0 0 rgba(200,240,96,.4);
+    }
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(200,240,96,.25);
+    }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    /* ── SUCCESS / ERROR MESSAGES ───────────────────────────── */
+    #form-message {
+      display: none;
+      margin-top: 24px;
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    #form-message.success {
+      background: rgba(200,240,96,.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    #form-message.error {
+      background: rgba(240,100,100,.1);
+      border: 1px solid #f06464;
+      color: #f09494;
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding-top: 48px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ═══════════════════════════════ HEADER ═══════════════════ -->
+  <header>
+    <div class="badge">Badanie anonimowe</div>
+    <h1>Które AI<br>brzmi lepiej? <em>Oceń.</em></h1>
+    <p class="subtitle">
+      Posłuchaj każdej pary utworów i odpowiedz na pytania.
+      Ankieta jest w pełni anonimowa i zajmuje ok. 5 minut.
+    </p>
+    <div class="divider"></div>
+  </header>
+
+  <!-- ═══════════════════════════════ FORM ════════════════════ -->
+  <form id="survey-form">
+
+    <!-- ──────────── PROMPT 1 ──────────── -->
+    <div class="prompt-section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+          <div class="section-title">Prompt: Upbeat pop song about summer with female vocals, bright and energetic</div>
+          <!-- 💡 Opcjonalnie: wpisz opis/treść promptu poniżej -->
+          <div class="section-prompt-label">Opis promptu (opcjonalnie)</div>
+        </div>
+      </div>
+
+      <div class="tracks-grid">
+
+        <!-- Utwór A -->
+        <div class="track-card">
+          <div class="track-label">Utwór A</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt1_A.mp3" type="audio/mpeg" />
+            Twoja przeglądarka nie obsługuje odtwarzacza audio.
+          </audio>
+
+          <div class="questions">
+            <!-- 📝 PYTANIE 1 – zmień treść w data-question -->
+            <div class="question-item">
+              <div class="question-text">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p1a_q1" id="p1a_q1_1" value="1" required /><label for="p1a_q1_1">1</label>
+                <input type="radio" name="p1a_q1" id="p1a_q1_2" value="2" /><label for="p1a_q1_2">2</label>
+                <input type="radio" name="p1a_q1" id="p1a_q1_3" value="3" /><label for="p1a_q1_3">3</label>
+                <input type="radio" name="p1a_q1" id="p1a_q1_4" value="4" /><label for="p1a_q1_4">4</label>
+                <input type="radio" name="p1a_q1" id="p1a_q1_5" value="5" /><label for="p1a_q1_5">5</label>
+              </div>
+            </div>
+            <!-- 📝 PYTANIE 2 -->
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p1a_q2" id="p1a_q2_1" value="1" required /><label for="p1a_q2_1">1</label>
+                <input type="radio" name="p1a_q2" id="p1a_q2_2" value="2" /><label for="p1a_q2_2">2</label>
+                <input type="radio" name="p1a_q2" id="p1a_q2_3" value="3" /><label for="p1a_q2_3">3</label>
+                <input type="radio" name="p1a_q2" id="p1a_q2_4" value="4" /><label for="p1a_q2_4">4</label>
+                <input type="radio" name="p1a_q2" id="p1a_q2_5" value="5" /><label for="p1a_q2_5">5</label>
+              </div>
+            </div>
+            <!-- 📝 PYTANIE 3 -->
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p1a_q3" id="p1a_q3_1" value="1" required /><label for="p1a_q3_1">1</label>
+                <input type="radio" name="p1a_q3" id="p1a_q3_2" value="2" /><label for="p1a_q3_2">2</label>
+                <input type="radio" name="p1a_q3" id="p1a_q3_3" value="3" /><label for="p1a_q3_3">3</label>
+                <input type="radio" name="p1a_q3" id="p1a_q3_4" value="4" /><label for="p1a_q3_4">4</label>
+                <input type="radio" name="p1a_q3" id="p1a_q3_5" value="5" /><label for="p1a_q3_5">5</label>
+              </div>
+            </div>
+            <!-- 📝 PYTANIE 4 -->
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p1a_q4" id="p1a_q4_1" value="1" required /><label for="p1a_q4_1">1</label>
+                <input type="radio" name="p1a_q4" id="p1a_q4_2" value="2" /><label for="p1a_q4_2">2</label>
+                <input type="radio" name="p1a_q4" id="p1a_q4_3" value="3" /><label for="p1a_q4_3">3</label>
+                <input type="radio" name="p1a_q4" id="p1a_q4_4" value="4" /><label for="p1a_q4_4">4</label>
+                <input type="radio" name="p1a_q4" id="p1a_q4_5" value="5" /><label for="p1a_q4_5">5</label>
+              </div>
+            </div>
+            <!-- 📝 PYTANIE 5 -->
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p1a_q5" id="p1a_q5_1" value="1" required /><label for="p1a_q5_1">1</label>
+                <input type="radio" name="p1a_q5" id="p1a_q5_2" value="2" /><label for="p1a_q5_2">2</label>
+                <input type="radio" name="p1a_q5" id="p1a_q5_3" value="3" /><label for="p1a_q5_3">3</label>
+                <input type="radio" name="p1a_q5" id="p1a_q5_4" value="4" /><label for="p1a_q5_4">4</label>
+                <input type="radio" name="p1a_q5" id="p1a_q5_5" value="5" /><label for="p1a_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Utwór B -->
+        <div class="track-card">
+          <div class="track-label">Utwór B</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt1_B.mp3" type="audio/mpeg" />
+            Twoja przeglądarka nie obsługuje odtwarzacza audio.
+          </audio>
+
+          <div class="questions">
+            <div class="question-item">
+              <div class="question-text" data-q="p1b_q1">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p1b_q1" id="p1b_q1_1" value="1" required /><label for="p1b_q1_1">1</label>
+                <input type="radio" name="p1b_q1" id="p1b_q1_2" value="2" /><label for="p1b_q1_2">2</label>
+                <input type="radio" name="p1b_q1" id="p1b_q1_3" value="3" /><label for="p1b_q1_3">3</label>
+                <input type="radio" name="p1b_q1" id="p1b_q1_4" value="4" /><label for="p1b_q1_4">4</label>
+                <input type="radio" name="p1b_q1" id="p1b_q1_5" value="5" /><label for="p1b_q1_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p1b_q2" id="p1b_q2_1" value="1" required /><label for="p1b_q2_1">1</label>
+                <input type="radio" name="p1b_q2" id="p1b_q2_2" value="2" /><label for="p1b_q2_2">2</label>
+                <input type="radio" name="p1b_q2" id="p1b_q2_3" value="3" /><label for="p1b_q2_3">3</label>
+                <input type="radio" name="p1b_q2" id="p1b_q2_4" value="4" /><label for="p1b_q2_4">4</label>
+                <input type="radio" name="p1b_q2" id="p1b_q2_5" value="5" /><label for="p1b_q2_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p1b_q3" id="p1b_q3_1" value="1" required /><label for="p1b_q3_1">1</label>
+                <input type="radio" name="p1b_q3" id="p1b_q3_2" value="2" /><label for="p1b_q3_2">2</label>
+                <input type="radio" name="p1b_q3" id="p1b_q3_3" value="3" /><label for="p1b_q3_3">3</label>
+                <input type="radio" name="p1b_q3" id="p1b_q3_4" value="4" /><label for="p1b_q3_4">4</label>
+                <input type="radio" name="p1b_q3" id="p1b_q3_5" value="5" /><label for="p1b_q3_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p1b_q4" id="p1b_q4_1" value="1" required /><label for="p1b_q4_1">1</label>
+                <input type="radio" name="p1b_q4" id="p1b_q4_2" value="2" /><label for="p1b_q4_2">2</label>
+                <input type="radio" name="p1b_q4" id="p1b_q4_3" value="3" /><label for="p1b_q4_3">3</label>
+                <input type="radio" name="p1b_q4" id="p1b_q4_4" value="4" /><label for="p1b_q4_4">4</label>
+                <input type="radio" name="p1b_q4" id="p1b_q4_5" value="5" /><label for="p1b_q4_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p1b_q5" id="p1b_q5_1" value="1" required /><label for="p1b_q5_1">1</label>
+                <input type="radio" name="p1b_q5" id="p1b_q5_2" value="2" /><label for="p1b_q5_2">2</label>
+                <input type="radio" name="p1b_q5" id="p1b_q5_3" value="3" /><label for="p1b_q5_3">3</label>
+                <input type="radio" name="p1b_q5" id="p1b_q5_4" value="4" /><label for="p1b_q5_4">4</label>
+                <input type="radio" name="p1b_q5" id="p1b_q5_5" value="5" /><label for="p1b_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pytanie zbiorcze -->
+      <div class="winner-block">
+        <div class="winner-label">Który utwór z tej pary oceniasz ogólnie jako lepszy?</div>
+        <div class="winner-options">
+          <input type="radio" name="p1_winner" id="p1w_a" value="Utwór A" required />
+          <label for="p1w_a">🎵 Utwór A</label>
+          <input type="radio" name="p1_winner" id="p1w_b" value="Utwór B" />
+          <label for="p1w_b">🎵 Utwór B</label>
+        </div>
+      </div>
+    </div>
+    <!-- /PROMPT 1 -->
+
+
+    <!-- ──────────── PROMPT 2 ──────────── -->
+    <div class="prompt-section">
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <div>
+          <div class="section-title">Prompt: Melancholic piano ballad, slow tempo, emotional, no vocals</div>
+          <div class="section-prompt-label">Muzyka instrumentalna, emocjonalnie nacechowana, bez wokalu</div>
+        </div>
+      </div>
+
+      <div class="tracks-grid">
+
+        <!-- Utwór A -->
+        <div class="track-card">
+          <div class="track-label">Utwór A</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt2_A.mp3" type="audio/mpeg" />
+          </audio>
+          <div class="questions">
+            <div class="question-item">
+              <div class="question-text" data-q="p2a_q1">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p2a_q1" id="p2a_q1_1" value="1" required /><label for="p2a_q1_1">1</label>
+                <input type="radio" name="p2a_q1" id="p2a_q1_2" value="2" /><label for="p2a_q1_2">2</label>
+                <input type="radio" name="p2a_q1" id="p2a_q1_3" value="3" /><label for="p2a_q1_3">3</label>
+                <input type="radio" name="p2a_q1" id="p2a_q1_4" value="4" /><label for="p2a_q1_4">4</label>
+                <input type="radio" name="p2a_q1" id="p2a_q1_5" value="5" /><label for="p2a_q1_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p2a_q2" id="p2a_q2_1" value="1" required /><label for="p2a_q2_1">1</label>
+                <input type="radio" name="p2a_q2" id="p2a_q2_2" value="2" /><label for="p2a_q2_2">2</label>
+                <input type="radio" name="p2a_q2" id="p2a_q2_3" value="3" /><label for="p2a_q2_3">3</label>
+                <input type="radio" name="p2a_q2" id="p2a_q2_4" value="4" /><label for="p2a_q2_4">4</label>
+                <input type="radio" name="p2a_q2" id="p2a_q2_5" value="5" /><label for="p2a_q2_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p2a_q3" id="p2a_q3_1" value="1" required /><label for="p2a_q3_1">1</label>
+                <input type="radio" name="p2a_q3" id="p2a_q3_2" value="2" /><label for="p2a_q3_2">2</label>
+                <input type="radio" name="p2a_q3" id="p2a_q3_3" value="3" /><label for="p2a_q3_3">3</label>
+                <input type="radio" name="p2a_q3" id="p2a_q3_4" value="4" /><label for="p2a_q3_4">4</label>
+                <input type="radio" name="p2a_q3" id="p2a_q3_5" value="5" /><label for="p2a_q3_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p2a_q4" id="p2a_q4_1" value="1" required /><label for="p2a_q4_1">1</label>
+                <input type="radio" name="p2a_q4" id="p2a_q4_2" value="2" /><label for="p2a_q4_2">2</label>
+                <input type="radio" name="p2a_q4" id="p2a_q4_3" value="3" /><label for="p2a_q4_3">3</label>
+                <input type="radio" name="p2a_q4" id="p2a_q4_4" value="4" /><label for="p2a_q4_4">4</label>
+                <input type="radio" name="p2a_q4" id="p2a_q4_5" value="5" /><label for="p2a_q4_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p2a_q5" id="p2a_q5_1" value="1" required /><label for="p2a_q5_1">1</label>
+                <input type="radio" name="p2a_q5" id="p2a_q5_2" value="2" /><label for="p2a_q5_2">2</label>
+                <input type="radio" name="p2a_q5" id="p2a_q5_3" value="3" /><label for="p2a_q5_3">3</label>
+                <input type="radio" name="p2a_q5" id="p2a_q5_4" value="4" /><label for="p2a_q5_4">4</label>
+                <input type="radio" name="p2a_q5" id="p2a_q5_5" value="5" /><label for="p2a_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Utwór B -->
+        <div class="track-card">
+          <div class="track-label">Utwór B</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt2_B.mp3" type="audio/mpeg" />
+          </audio>
+
+          <div class="questions">
+            <div class="question-item">
+              <div class="question-text" data-q="p2b_q1">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p2b_q1" id="p2b_q1_1" value="1" required /><label for="p2b_q1_1">1</label>
+                <input type="radio" name="p2b_q1" id="p2b_q1_2" value="2" /><label for="p2b_q1_2">2</label>
+                <input type="radio" name="p2b_q1" id="p2b_q1_3" value="3" /><label for="p2b_q1_3">3</label>
+                <input type="radio" name="p2b_q1" id="p2b_q1_4" value="4" /><label for="p2b_q1_4">4</label>
+                <input type="radio" name="p2b_q1" id="p2b_q1_5" value="5" /><label for="p2b_q1_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p2b_q2" id="p2b_q2_1" value="1" required /><label for="p2b_q2_1">1</label>
+                <input type="radio" name="p2b_q2" id="p2b_q2_2" value="2" /><label for="p2b_q2_2">2</label>
+                <input type="radio" name="p2b_q2" id="p2b_q2_3" value="3" /><label for="p2b_q2_3">3</label>
+                <input type="radio" name="p2b_q2" id="p2b_q2_4" value="4" /><label for="p2b_q2_4">4</label>
+                <input type="radio" name="p2b_q2" id="p2b_q2_5" value="5" /><label for="p2b_q2_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p2b_q3" id="p2b_q3_1" value="1" required /><label for="p2b_q3_1">1</label>
+                <input type="radio" name="p2b_q3" id="p2b_q3_2" value="2" /><label for="p2b_q3_2">2</label>
+                <input type="radio" name="p2b_q3" id="p2b_q3_3" value="3" /><label for="p2b_q3_3">3</label>
+                <input type="radio" name="p2b_q3" id="p2b_q3_4" value="4" /><label for="p2b_q3_4">4</label>
+                <input type="radio" name="p2b_q3" id="p2b_q3_5" value="5" /><label for="p2b_q3_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p2b_q4" id="p2b_q4_1" value="1" required /><label for="p2b_q4_1">1</label>
+                <input type="radio" name="p2b_q4" id="p2b_q4_2" value="2" /><label for="p2b_q4_2">2</label>
+                <input type="radio" name="p2b_q4" id="p2b_q4_3" value="3" /><label for="p2b_q4_3">3</label>
+                <input type="radio" name="p2b_q4" id="p2b_q4_4" value="4" /><label for="p2b_q4_4">4</label>
+                <input type="radio" name="p2b_q4" id="p2b_q4_5" value="5" /><label for="p2b_q4_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p2b_q5" id="p2b_q5_1" value="1" required /><label for="p2b_q5_1">1</label>
+                <input type="radio" name="p2b_q5" id="p2b_q5_2" value="2" /><label for="p2b_q5_2">2</label>
+                <input type="radio" name="p2b_q5" id="p2b_q5_3" value="3" /><label for="p2b_q5_3">3</label>
+                <input type="radio" name="p2b_q5" id="p2b_q5_4" value="4" /><label for="p2b_q5_4">4</label>
+                <input type="radio" name="p2b_q5" id="p2b_q5_5" value="5" /><label for="p2b_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="winner-block">
+        <div class="winner-label">Który utwór z tej pary oceniasz ogólnie jako lepszy?</div>
+        <div class="winner-options">
+          <input type="radio" name="p2_winner" id="p2w_a" value="Utwór A" required />
+          <label for="p2w_a">🎵 Utwór A</label>
+          <input type="radio" name="p2_winner" id="p2w_b" value="Utwór B" />
+          <label for="p2w_b">🎵 Utwór B</label>
+        </div>
+      </div>
+    </div>
+    <!-- /PROMPT 2 -->
+
+
+    <!-- ──────────── PROMPT 3 ──────────── -->
+    <div class="prompt-section">
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <div>
+          <div class="section-title">Prompt: Dark electronic track with heavy bass, 140 BPM, cyberpunk vibe</div>
+          <div class="section-prompt-label">Muzyka elektroniczna z precyzyjnym parametrem technicznym (BPM) i klimatycznym określeniem stylu</div>
+        </div>
+      </div>
+
+      <div class="tracks-grid">
+
+        <!-- Utwór A -->
+        <div class="track-card">
+          <div class="track-label">Utwór A</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt3_A.mp3" type="audio/mpeg" />
+          </audio>
+          <div class="questions">
+            <div class="question-item">
+              <div class="question-text" data-q="p3a_q1">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p3a_q1" id="p3a_q1_1" value="1" required /><label for="p3a_q1_1">1</label>
+                <input type="radio" name="p3a_q1" id="p3a_q1_2" value="2" /><label for="p3a_q1_2">2</label>
+                <input type="radio" name="p3a_q1" id="p3a_q1_3" value="3" /><label for="p3a_q1_3">3</label>
+                <input type="radio" name="p3a_q1" id="p3a_q1_4" value="4" /><label for="p3a_q1_4">4</label>
+                <input type="radio" name="p3a_q1" id="p3a_q1_5" value="5" /><label for="p3a_q1_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p3a_q2" id="p3a_q2_1" value="1" required /><label for="p3a_q2_1">1</label>
+                <input type="radio" name="p3a_q2" id="p3a_q2_2" value="2" /><label for="p3a_q2_2">2</label>
+                <input type="radio" name="p3a_q2" id="p3a_q2_3" value="3" /><label for="p3a_q2_3">3</label>
+                <input type="radio" name="p3a_q2" id="p3a_q2_4" value="4" /><label for="p3a_q2_4">4</label>
+                <input type="radio" name="p3a_q2" id="p3a_q2_5" value="5" /><label for="p3a_q2_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p3a_q3" id="p3a_q3_1" value="1" required /><label for="p3a_q3_1">1</label>
+                <input type="radio" name="p3a_q3" id="p3a_q3_2" value="2" /><label for="p3a_q3_2">2</label>
+                <input type="radio" name="p3a_q3" id="p3a_q3_3" value="3" /><label for="p3a_q3_3">3</label>
+                <input type="radio" name="p3a_q3" id="p3a_q3_4" value="4" /><label for="p3a_q3_4">4</label>
+                <input type="radio" name="p3a_q3" id="p3a_q3_5" value="5" /><label for="p3a_q3_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p3a_q4" id="p3a_q4_1" value="1" required /><label for="p3a_q4_1">1</label>
+                <input type="radio" name="p3a_q4" id="p3a_q4_2" value="2" /><label for="p3a_q4_2">2</label>
+                <input type="radio" name="p3a_q4" id="p3a_q4_3" value="3" /><label for="p3a_q4_3">3</label>
+                <input type="radio" name="p3a_q4" id="p3a_q4_4" value="4" /><label for="p3a_q4_4">4</label>
+                <input type="radio" name="p3a_q4" id="p3a_q4_5" value="5" /><label for="p3a_q4_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p3a_q5" id="p3a_q5_1" value="1" required /><label for="p3a_q5_1">1</label>
+                <input type="radio" name="p3a_q5" id="p3a_q5_2" value="2" /><label for="p3a_q5_2">2</label>
+                <input type="radio" name="p3a_q5" id="p3a_q5_3" value="3" /><label for="p3a_q5_3">3</label>
+                <input type="radio" name="p3a_q5" id="p3a_q5_4" value="4" /><label for="p3a_q5_4">4</label>
+                <input type="radio" name="p3a_q5" id="p3a_q5_5" value="5" /><label for="p3a_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Utwór B -->
+        <div class="track-card">
+          <div class="track-label">Utwór B</div>
+          <!-- 🎵 ZMIEŃ ŚCIEŻKĘ DO PLIKU MP3 -->
+          <audio controls preload="none">
+            <source src="audio/prompt3_B.mp3" type="audio/mpeg" />
+          </audio>
+          <div class="questions">
+            <div class="question-item">
+              <div class="question-text" data-q="p3b_q1">Pytanie 1: Jakość techniczna dźwięku</div>
+              <div class="question-description">Czystość nagrania, brak artefaktów, szumów, kompresji.</div>
+              <div class="rating-group">
+                <input type="radio" name="p3b_q1" id="p3b_q1_1" value="1" required /><label for="p3b_q1_1">1</label>
+                <input type="radio" name="p3b_q1" id="p3b_q1_2" value="2" /><label for="p3b_q1_2">2</label>
+                <input type="radio" name="p3b_q1" id="p3b_q1_3" value="3" /><label for="p3b_q1_3">3</label>
+                <input type="radio" name="p3b_q1" id="p3b_q1_4" value="4" /><label for="p3b_q1_4">4</label>
+                <input type="radio" name="p3b_q1" id="p3b_q1_5" value="5" /><label for="p3b_q1_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 2: Jakość wokalu (jeśli dotyczy)</div>
+              <div class="question-description">Naturalność, intoncja, emocjonalność głosu</div>
+              <div class="rating-group">
+                <input type="radio" name="p3b_q2" id="p3b_q2_1" value="1" required /><label for="p3b_q2_1">1</label>
+                <input type="radio" name="p3b_q2" id="p3b_q2_2" value="2" /><label for="p3b_q2_2">2</label>
+                <input type="radio" name="p3b_q2" id="p3b_q2_3" value="3" /><label for="p3b_q2_3">3</label>
+                <input type="radio" name="p3b_q2" id="p3b_q2_4" value="4" /><label for="p3b_q2_4">4</label>
+                <input type="radio" name="p3b_q2" id="p3b_q2_5" value="5" /><label for="p3b_q2_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 3: Zgodność z promptem</div>
+              <div class="question-description">Czy wynik odpowiada dosłownie opisowi (gatunek, tempo, nastrój)</div>
+              <div class="rating-group">
+                <input type="radio" name="p3b_q3" id="p3b_q3_1" value="1" required /><label for="p3b_q3_1">1</label>
+                <input type="radio" name="p3b_q3" id="p3b_q3_2" value="2" /><label for="p3b_q3_2">2</label>
+                <input type="radio" name="p3b_q3" id="p3b_q3_3" value="3" /><label for="p3b_q3_3">3</label>
+                <input type="radio" name="p3b_q3" id="p3b_q3_4" value="4" /><label for="p3b_q3_4">4</label>
+                <input type="radio" name="p3b_q3" id="p3b_q3_5" value="5" /><label for="p3b_q3_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 4: Struktura muzyczna</div>
+              <div class="question-description">Spójność kompozycji (intro, zwrotka, refren, bridge, outro)</div>
+              <div class="rating-group">
+                <input type="radio" name="p3b_q4" id="p3b_q4_1" value="1" required /><label for="p3b_q4_1">1</label>
+                <input type="radio" name="p3b_q4" id="p3b_q4_2" value="2" /><label for="p3b_q4_2">2</label>
+                <input type="radio" name="p3b_q4" id="p3b_q4_3" value="3" /><label for="p3b_q4_3">3</label>
+                <input type="radio" name="p3b_q4" id="p3b_q4_4" value="4" /><label for="p3b_q4_4">4</label>
+                <input type="radio" name="p3b_q4" id="p3b_q4_5" value="5" /><label for="p3b_q4_5">5</label>
+              </div>
+            </div>
+            <div class="question-item">
+              <div class="question-text">Pytanie 5: Ogólna atrakcyjność estetyczna</div>
+              <div class="question-description">Subiektywne wrażenie "słuchalności" i przyjemności odbioru</div>
+              <div class="rating-group">
+                <input type="radio" name="p3b_q5" id="p3b_q5_1" value="1" required /><label for="p3b_q5_1">1</label>
+                <input type="radio" name="p3b_q5" id="p3b_q5_2" value="2" /><label for="p3b_q5_2">2</label>
+                <input type="radio" name="p3b_q5" id="p3b_q5_3" value="3" /><label for="p3b_q5_3">3</label>
+                <input type="radio" name="p3b_q5" id="p3b_q5_4" value="4" /><label for="p3b_q5_4">4</label>
+                <input type="radio" name="p3b_q5" id="p3b_q5_5" value="5" /><label for="p3b_q5_5">5</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="winner-block">
+        <div class="winner-label">Który utwór z tej pary oceniasz ogólnie jako lepszy?</div>
+        <div class="winner-options">
+          <input type="radio" name="p3_winner" id="p3w_a" value="Utwór A" required />
+          <label for="p3w_a">🎵 Utwór A</label>
+          <input type="radio" name="p3_winner" id="p3w_b" value="Utwór B" />
+          <label for="p3w_b">🎵 Utwór B</label>
+        </div>
+      </div>
+    </div>
+    <!-- /PROMPT 3 -->
+
+    <!-- ═══════════════ SUBMIT ═══════════ -->
+    <div class="submit-block">
+      <button type="submit" class="submit-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Wyślij ankietę
+      </button>
+      <p class="submit-hint">Ankieta jest w pełni anonimowa. Dziękujemy za czas!</p>
+      <div id="form-message"></div>
+    </div>
+
+  </form>
+
+  <footer>
+    Projekt badawczy · Anonimowa ankieta porównawcza AI Music
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════ JS ═══════════════════════════════ -->
+<script>
+  // Twój wygenerowany link do Arkuszy Google
+  const FORMSPREE_ENDPOINT = "https://script.google.com/macros/s/AKfycbx6AZ71TyOiNN_U158VSHyX13euXgvxfzN_RkkqX7nNxLp8bVohM2-mSLTy0WTSa3cllg/exec";
+
+  const form    = document.getElementById("survey-form");
+  const message = document.getElementById("form-message");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    // Ukrywamy ewentualne starsze komunikaty
+    message.style.display = "none";
+
+    // Sprawdzenie, czy wszystkie pytania zostały wypełnione
+    if (!form.checkValidity()) {
+      // 🔴 WYRAŹNY KOMUNIKAT O BRAKACH
+      message.className = "error";
+      message.style.display = "block";
+      message.textContent = "❌ Proszę odpowiedzieć na wszystkie pytania przed wysłaniem.";
+      
+      // Przewija stronę do pierwszego pominiętego pytania i pokazuje dymek
+      form.reportValidity(); 
+      return;
+    }
+
+    // Zmiana wyglądu przycisku na czas wysyłania
+    const btn = form.querySelector(".submit-btn");
+    btn.disabled = true;
+    btn.textContent = "Wysyłanie…";
+
+    // Formatowanie danych specjalnie dla Google Sheets
+    const data = new FormData(form);
+    const urlParams = new URLSearchParams(data);
+
+    try {
+      // Wysłanie w tle do arkusza Google
+      await fetch(FORMSPREE_ENDPOINT, {
+        method:  "POST",
+        mode:    "no-cors", 
+        body:    urlParams
+      });
+
+      // ✅ POKAZANIE INFORMACJI O SUKCESIE
+      message.className = "success";
+      message.style.display = "block";
+      message.textContent = "✅ Ankieta wysłana pomyślnie! Bardzo dziękujemy za Twój czas.";
+      
+      // Wyczyszczenie formularza
+      form.reset();
+      btn.textContent = "Wysłano ✓";
+      
+    } catch (error) {
+      // ❌ POKAZANIE INFORMACJI O BŁĘDZIE SERWERA
+      message.className = "error";
+      message.style.display = "block";
+      message.textContent = "❌ Coś poszło nie tak. Spróbuj ponownie.";
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Wyślij ankietę`;
+    }
+  });
+
+  // Skrypt upewniający się, że gra tylko jeden utwór naraz
+  document.addEventListener('DOMContentLoaded', () => {
+    const audios = Array.from(document.querySelectorAll('audio'));
+
+    function pauseOther(current) {
+      audios.forEach(a => {
+        if (a !== current && !a.paused) {
+          a.pause();
+        }
+      });
+    }
+
+    audios.forEach(a => {
+      if (a.dataset.controlsInit === '1') return;
+      a.addEventListener('play', () => pauseOther(a));
+      a.dataset.controlsInit = '1';
+    });
+  });
+</script>
+</body>
+</html>
